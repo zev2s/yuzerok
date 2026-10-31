@@ -22,13 +22,17 @@ header{height:62px;border-bottom:1px solid #202020;display:flex;align-items:cent
 .tag{background:#242424;color:#aaa;border-radius:8px;padding:6px 8px;font-size:9px;font-weight:900}
 button{cursor:pointer}
 .action{width:100%;padding:15px;border:1px solid #444;border-radius:15px;background:#151515;color:#fff;font-weight:850;margin-top:10px;transition:transform .15s,background .2s}
+
 .action:active{transform:scale(.97);background:#222}
+.result-sell{width:100%;margin-top:10px;padding:15px 16px;border:1px solid #333;border-radius:15px;background:#151515;color:#aaa;font-weight:850;font-size:14px;transition:transform .15s,background .2s,color .2s}
+.result-sell:active{transform:scale(.97);background:#222}
+
 .action:disabled{opacity:.45}
 .list{display:grid;gap:8px}.item{padding:13px;display:flex;align-items:center;gap:12px}
-.won-line{font-size:15px;line-height:1.75;color:#ddd;text-align:left;word-break:break-word}
+.won-line{font-size:15px;line-height:1.75;color:#ddd;text-align:left;word-break:break-word}.won-user{cursor:pointer}.won-user:active{opacity:.55}
 .won-line a{color:#fff;text-decoration:none}
 .value{font-size:11px;color:#777;margin-top:3px}
-.sell{border:1px solid #333;background:#181818;color:#bbb;border-radius:10px;padding:8px 10px;font-weight:800;font-size:11px}
+.sell{border:1px solid #333;background:#181818;color:#bbb;border-radius:10px;padding:8px 10px;font-weight:800;font-size:11px}.user-actions{position:fixed;inset:0;background:#0009;display:flex;align-items:flex-end;z-index:30}.user-actions.hidden{display:none}.user-sheet{width:100%;padding:18px 18px calc(18px + env(safe-area-inset-bottom));background:#111;border-top:1px solid #333;border-radius:22px 22px 0 0}.user-sheet h3{margin:0 0 6px;font-size:22px}.user-sheet p{margin:0 0 16px;color:#777}.user-sheet button{width:100%;margin-top:8px}
 .sell:active{transform:scale(.96)}
 
 .ico{width:42px;height:42px;border-radius:12px;background:#202020;display:grid;place-items:center;color:#aaa;font-weight:900}
@@ -81,6 +85,7 @@ button{cursor:pointer}
 <div id="result" class="result">@????</div>
 <div id="rarity" class="rarity">БЕСПЛАТНО</div>
 <button id="spinBtn" class="action" onclick="spin()">СГЕНЕРИРОВАТЬ</button>
+<button id="sellResultBtn" class="result-sell hidden" onclick="sellCurrentResult()">ПРОДАТЬ ЮЗ</button>
 </div>
 </section>
 
@@ -160,26 +165,74 @@ async function loadProfile(){
 
    const won=(d.usernames||[]).filter(x=>x.rarity!=="ADDED");
    $("list").innerHTML = won.length
-     ? `<div class="won-line">${won.map(x=>`@${x.username.replace(/^@/,"")}`).join(", ")}</div>
-        <div class="list">
-          ${won.map(x=>`
-            <div class="item">
-              <div class="ico">@</div>
-              <div class="grow">
-                <div class="u">@${x.username.replace(/^@/,"")}</div>
-                <div class="sub">${x.rarity} · ${Number(x.value||0).toLocaleString("ru-RU")} 🪙</div>
-              </div>
-              <button class="sell" onclick="sellUsername('${x.username.replace(/'/g,"\\'")}')">ПРОДАТЬ</button>
-            </div>
-          `).join("")}
-        </div>`
+     ? `<div class="won-line">${won.map(x=>
+         `<span class="won-user" data-username="${x.username.replace(/"/g,'&quot;')}" data-value="${Number(x.value||0)}">${"@"+x.username.replace(/^@/,"")}</span>`
+       ).join(", ")}</div>`
      : '<div class="muted">Пока ничего не выпало</div>';
+
+   document.querySelectorAll(".won-user").forEach(el=>{
+     el.onclick=()=>openUsernameActions(el.dataset.username, Number(el.dataset.value||0));
+   });
  }catch(e){toast(e.message)}
+}
+
+let selectedUsername="";
+let selectedValue=0;
+let currentResultUsername="";
+let currentResultValue=0;
+
+function openUsernameActions(username,value){
+  selectedUsername=username;
+  selectedValue=value;
+  $("actionUsername").textContent="@"+username;
+  $("actionValue").textContent="Ценность: "+Number(value||0).toLocaleString("ru-RU")+" 🪙";
+  $("userActions").classList.remove("hidden");
+}
+function closeUsernameActions(){
+  $("userActions").classList.add("hidden");
+}
+$("makeMainBtn").onclick=async()=>{
+  try{
+    await api("/api/set-main",{username:selectedUsername});
+    $("main").textContent=selectedUsername;
+    closeUsernameActions();
+    toast("@"+selectedUsername+" теперь основной юз");
+  }catch(e){toast(e.message)}
+};
+$("sellBtn").onclick=async()=>{
+  if(!confirm("Продать @"+selectedUsername+" за "+Number(selectedValue||0).toLocaleString("ru-RU")+" 🪙?")) return;
+  try{
+    const d=await api("/api/sell",{username:selectedUsername});
+    $("balance").textContent="🪙 "+d.balance.toLocaleString("ru-RU");
+    closeUsernameActions();
+    await loadProfile();
+    toast("@"+selectedUsername+" продан");
+  }catch(e){toast(e.message)}
+};
+
+async function sellCurrentResult(){
+  if(!currentResultUsername) return;
+  const value = Number(currentResultValue || 0);
+  if(!confirm("Продать @"+currentResultUsername.replace(/^@/,"")+" за "+value.toLocaleString("ru-RU")+" 🪙?")) return;
+  try{
+    const d = await api("/api/sell",{username:currentResultUsername.replace(/^@/,"")});
+    $("balance").textContent="🪙 "+d.balance.toLocaleString("ru-RU");
+    $("sellResultBtn").classList.add("hidden");
+    toast("@"+currentResultUsername.replace(/^@/,"")+" продан за "+Number(d.value).toLocaleString("ru-RU")+" 🪙");
+    currentResultUsername="";
+    currentResultValue=0;
+    await loadProfile();
+  }catch(e){
+    toast(e.message);
+  }
 }
 
 async function spin(){
  const btn=$("spinBtn");
  btn.disabled=true;
+ $("sellResultBtn").classList.add("hidden");
+ currentResultUsername="";
+ currentResultValue=0;
 
  const r=$("result"),ra=$("rarity");
  r.classList.remove("reveal","win");
@@ -225,27 +278,20 @@ async function spin(){
      },220);
 
      $("balance").textContent="🪙 "+d.balance.toLocaleString("ru-RU");
+     currentResultUsername=d.username;
+     currentResultValue=Number(d.value||0);
+     $("sellResultBtn").textContent="ПРОДАТЬ ЗА "+currentResultValue.toLocaleString("ru-RU")+" 🪙";
+     $("sellResultBtn").classList.remove("hidden");
      loadProfile();
    }catch(e){
      r.classList.remove("spinning");
      toast(e.message);
      r.textContent="@????";
      ra.textContent="БЕСПЛАТНО";
+     $("sellResultBtn").classList.add("hidden");
    }
    btn.disabled=false;
  }
-}
-
-async function sellUsername(username){
-  if(!confirm("Продать "+username+" за фиксированную стоимость?")) return;
-  try{
-    const d=await api("/api/sell",{username});
-    $("balance").textContent="🪙 "+d.balance.toLocaleString("ru-RU");
-    toast(username+" продан за "+Number(d.value).toLocaleString("ru-RU")+" 🪙");
-    await loadProfile();
-  }catch(e){
-    toast(e.message);
-  }
 }
 
 async function loadRating(){
@@ -266,5 +312,15 @@ async function loadRating(){
 
 loadProfile();
 </script>
+<div id="userActions" class="user-actions hidden" onclick="if(event.target===this)closeUsernameActions()">
+  <div class="user-sheet">
+    <h3 id="actionUsername">@username</h3>
+    <p id="actionValue">Ценность: —</p>
+    <button class="action" id="makeMainBtn">Сделать основным</button>
+    <button class="action" id="sellBtn">Продать юз</button>
+    <button class="action" onclick="closeUsernameActions()">Отмена</button>
+  </div>
+</div>
+
 </body>
 </html>
