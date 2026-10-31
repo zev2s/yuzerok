@@ -7,153 +7,98 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body{min-height:100vh;overflow-x:hidden}
-button{font:inherit}
-.app{max-width:430px;min-height:100vh;margin:auto;background:#080808}
-.header{height:64px;border-bottom:1px solid #202020;display:flex;align-items:center;justify-content:center;font-weight:800}
-.page{padding:25px 18px 100px}
-.profile{text-align:center}
-.avatar{width:104px;height:104px;border-radius:50%;margin:8px auto 15px;background:#202020;border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:900;overflow:hidden}
-.avatar img{width:100%;height:100%;object-fit:cover}
-.name{font-size:23px;font-weight:850}
-.tguser{color:#707070;font-size:14px;margin-top:4px}
-.label{color:#666;font-size:11px;font-weight:800;letter-spacing:1px;margin:27px 2px 8px;text-transform:uppercase;text-align:left}
-.card{background:#111;border:1px solid #292929;border-radius:17px;padding:16px;display:flex;align-items:center;justify-content:space-between}
-.user{font-size:21px;font-weight:850}
-.tag{font-size:10px;font-weight:800;color:#aaa;background:#242424;padding:6px 8px;border-radius:8px}
-.add,.generate{width:100%;border:1px solid #444;background:#151515;color:#fff;border-radius:16px;padding:15px;font-weight:850;cursor:pointer}
-.add{margin-top:11px}
-.list{display:flex;flex-direction:column;gap:9px}
-.extra{display:flex;align-items:center;gap:12px;background:#111;border:1px solid #252525;border-radius:15px;padding:13px}
-.dot{width:42px;height:42px;border-radius:12px;background:#202020;display:flex;align-items:center;justify-content:center;color:#aaa;font-weight:900}
-.extra-main{flex:1}.extra-user{font-weight:800}.extra-info{font-size:12px;color:#666;margin-top:3px}
+body{margin:0;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:430px;min-height:100vh;margin:auto;background:#080808;padding-bottom:78px}
+header{height:62px;border-bottom:1px solid #202020;display:flex;align-items:center;justify-content:center;font-weight:850;position:relative}
+.page{padding:22px 18px}.center{text-align:center}
+.avatar{width:104px;height:104px;border-radius:50%;background:#222;border:1px solid #444;margin:8px auto 14px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:38px;font-weight:900}
+.avatar img{width:100%;height:100%;object-fit:cover}.name{font-size:23px;font-weight:900}.muted{color:#707070;font-size:13px}
+.label{margin:25px 2px 8px;color:#666;font-size:10px;font-weight:850;letter-spacing:1px}.card,.item{background:#111;border:1px solid #292929;border-radius:16px}
+.card{padding:15px;display:flex;align-items:center;justify-content:space-between}.mainuser{font-size:20px;font-weight:900}
+.tag{background:#242424;color:#aaa;border-radius:8px;padding:6px 8px;font-size:9px;font-weight:900}
+button{cursor:pointer}.action{width:100%;padding:15px;border:1px solid #444;border-radius:15px;background:#151515;color:#fff;font-weight:850;margin-top:10px}
+.list{display:grid;gap:8px}.item{padding:13px;display:flex;align-items:center;gap:12px}.ico{width:42px;height:42px;border-radius:12px;background:#202020;display:grid;place-items:center;color:#aaa;font-weight:900}.grow{flex:1}.u{font-weight:850}.sub{font-size:11px;color:#666;margin-top:3px}
+.balance{position:absolute;right:15px;color:#aaa;font-size:12px}
+.back{position:absolute;left:15px;color:#777;font-size:27px;background:none;border:0}
+.generator{text-align:center;padding:72px 20px}.result{font-size:43px;font-weight:950;min-height:60px;margin:15px 0 5px;transition:color 1s,text-shadow 1s}.rarity{font-size:13px;color:#555;font-weight:850;transition:color 1s}
+@keyframes reveal{0%{opacity:.15;filter:blur(8px)}70%{opacity:.8;filter:blur(1px)}100%{opacity:1;filter:none}}.reveal{animation:reveal .8s}
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);height:72px;background:#0b0b0bf5;border-top:1px solid #222;display:flex;justify-content:space-around;align-items:center;backdrop-filter:blur(15px)}
-.nav button{background:none;border:0;color:#666;font-size:11px}.nav button b{display:block;font-size:20px;margin-bottom:3px}.nav .active{color:#fff}
-.hidden{display:none!important}
-.back{position:absolute;left:18px;color:#777;font-size:27px;cursor:pointer}
-.generator{text-align:center;padding:80px 20px}
-.small{font-size:11px;color:#555;font-weight:800;letter-spacing:1px}
-.result{font-size:44px;font-weight:950;min-height:65px;margin-top:18px;transition:color 1.1s,text-shadow 1.1s;word-break:break-all}
-.rarity{font-size:13px;color:#555;font-weight:800;transition:color 1s}
-.generate{margin-top:45px}
-@keyframes reveal{0%{opacity:.2;filter:blur(8px);transform:scale(.96)}70%{opacity:.8;filter:blur(1px)}100%{opacity:1;filter:none;transform:scale(1)}}
-.reveal{animation:reveal .8s ease}
-.modal{position:fixed;inset:0;background:#000b;display:flex;align-items:flex-end;justify-content:center;z-index:20}
-.sheet{width:min(430px,100%);background:#111;border:1px solid #292929;border-radius:25px 25px 0 0;padding:22px}
-.sheet h3{margin:0 0 16px}.sheet input{width:100%;background:#090909;border:1px solid #333;color:#fff;border-radius:13px;padding:14px;outline:none}
-.sheet button{margin-top:10px;width:100%;padding:14px;border-radius:13px;border:1px solid #444;background:#222;color:#fff;font-weight:800}
+.nav button{border:0;background:none;color:#666;font-size:11px}.nav b{display:block;font-size:20px;margin-bottom:3px}.nav .on{color:#fff}
+.hidden{display:none!important}.modal{position:fixed;inset:0;background:#000b;display:flex;align-items:flex-end;z-index:5}.sheet{width:min(430px,100%);background:#111;border:1px solid #292929;border-radius:24px 24px 0 0;padding:20px}.sheet input{width:100%;padding:14px;border-radius:12px;background:#080808;border:1px solid #333;color:#fff;font-size:16px;outline:none}.sheet button{width:100%;padding:14px;margin-top:9px;border-radius:12px;border:1px solid #444;background:#222;color:#fff;font-weight:800}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#222;border:1px solid #444;padding:10px 14px;border-radius:12px;z-index:10;font-size:13px}
 </style>
 </head>
 <body>
 <div class="app">
-
-<section id="profilePage">
-<div class="header">Профиль</div>
-<div class="page profile">
+<section id="profile">
+<header>Профиль <span id="balance" class="balance">🪙 —</span></header>
+<div class="page center">
 <div id="avatar" class="avatar">?</div>
-<div id="name" class="name">Пользователь</div>
-<div id="tguser" class="tguser">@username</div>
-
+<div id="name" class="name">Загрузка...</div>
+<div id="tg" class="muted">@username</div>
 <div class="label">Основной юз</div>
-<div class="card"><div id="mainUser" class="user">—</div><div class="tag">ОСНОВНОЙ</div></div>
-<button class="add" onclick="openAdd()">＋ Добавить юз</button>
-
+<div class="card"><div id="main" class="mainuser">—</div><div class="tag">ОСНОВНОЙ</div></div>
+<button class="action" onclick="openAdd()">＋ Добавить юз</button>
 <div class="label">А так же</div>
-<div id="extraList" class="list"></div>
-</div>
-</section>
+<div id="list" class="list"></div>
+</div></section>
 
 <section id="spinPage" class="hidden">
-<div class="header"><span class="back" onclick="showProfile()">‹</span>Крутить юз</div>
+<header><button class="back" onclick="show('profile')">‹</button>Крутить юз</header>
 <div class="generator">
-<div class="small">СЛУЧАЙНЫЙ ЮЗ</div>
-<div id="result" class="result">@????</div>
-<div id="rarity" class="rarity">нажми, чтобы начать</div>
-<button class="generate" onclick="spin()">СГЕНЕРИРОВАТЬ · 1 000 🪙</button>
-</div>
-</section>
+<div class="muted">СЛУЧАЙНЫЙ ЮЗ</div>
+<div id="result" class="result">@????</div><div id="rarity" class="rarity">1 000 🪙 за попытку</div>
+<button id="spinBtn" class="action" onclick="spin()">СГЕНЕРИРОВАТЬ · 1 000 🪙</button>
+</div></section>
 
-<div id="addModal" class="modal hidden" onclick="if(event.target===this)closeAdd()">
-<div class="sheet">
-<h3>Добавить юз</h3>
-<input id="newUser" maxlength="32" placeholder="@username">
-<button onclick="saveUser()">Добавить</button>
-<button onclick="closeAdd()">Отмена</button>
-</div>
-</div>
+<section id="rating" class="hidden"><header>Рейтинг</header><div class="page"><div id="leaders" class="list"></div></div></section>
 
-<nav class="nav">
-<button id="spinNav" onclick="showSpin()"><b>🎲</b>Крутить</button>
-<button><b>🏆</b>Рейтинг</button>
-<button class="active" onclick="showProfile()"><b>👤</b>Профиль</button>
-</nav>
+<div id="modal" class="modal hidden" onclick="if(event.target===this)closeAdd()">
+<div class="sheet"><h3>Добавить юз</h3><input id="newUser" maxlength="32" placeholder="@username"><button onclick="addUser()">Добавить</button><button onclick="closeAdd()">Отмена</button></div></div>
+
+<nav class="nav"><button onclick="show('spinPage')" id="nspin"><b>🎲</b>Крутить</button><button onclick="loadRating();show('rating')"><b>🏆</b>Рейтинг</button><button onclick="show('profile')" class="on"><b>👤</b>Профиль</button></nav>
 </div>
 
 <script>
-const tg=window.Telegram?.WebApp;
-if(tg){tg.ready();tg.expand();}
-
-const chars="abcdefghijklmnopqrstuvwxyz0123456789";
-let extras=JSON.parse(localStorage.getItem("extras")||"[]");
-
-function initUser(){
- const u=tg?.initDataUnsafe?.user;
- if(!u)return;
- const full=[u.first_name,u.last_name].filter(Boolean).join(" ");
- document.getElementById("name").textContent=full||"Пользователь";
- document.getElementById("tguser").textContent=u.username?"@"+u.username:"username не указан";
- if(u.photo_url){
-   document.getElementById("avatar").innerHTML='<img src="'+u.photo_url+'" alt="">';
- }else{
-   document.getElementById("avatar").textContent=(u.first_name||"?")[0].toUpperCase();
+const tg=window.Telegram?.WebApp; if(tg){tg.ready();tg.expand()}
+const initData=tg?.initData||"";
+const API=location.origin;
+const $=id=>document.getElementById(id);
+function toast(t){const x=document.createElement("div");x.className="toast";x.textContent=t;document.body.appendChild(x);setTimeout(()=>x.remove(),1800)}
+function show(id){["profile","spinPage","rating"].forEach(x=>$(x).classList.add("hidden"));$(id).classList.remove("hidden")}
+async function api(path,body){const r=await fetch(API+path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...body,initData})});const d=await r.json();if(!r.ok)throw Error(d.detail||"Ошибка");return d}
+async function loadProfile(){
+ if(!initData){$("name").textContent="Открой игру через Telegram";return}
+ try{
+  const d=await api("/api/profile",{});
+  $("name").textContent=[d.user.first_name,d.user.last_name].filter(Boolean).join(" ")||"Пользователь";
+  $("tg").textContent=d.user.username?"@"+d.user.username:"username не указан";
+  $("balance").textContent="🪙 "+d.balance.toLocaleString("ru-RU");
+  $("main").textContent=d.main_username||"—";
+  if(d.user.photo_url)$("avatar").innerHTML='<img src="'+d.user.photo_url+'" alt="Аватар">';
+  else $("avatar").textContent=(d.user.first_name||"?")[0].toUpperCase();
+  $("list").innerHTML=d.usernames.filter(x=>x.rarity!=="ADDED"||true).map(x=>`<div class="item"><div class="ico">@</div><div class="grow"><div class="u">@${x.username.replace(/^@/,"")}</div><div class="sub">${x.rarity}</div></div></div>`).join("")||'<div class="muted">Пока нет дополнительных юзов</div>';
+ }catch(e){toast(e.message)}
+}
+async function spin(){
+ $("spinBtn").disabled=true;
+ const r=$("result"),ra=$("rarity");r.style.color="#555";r.style.textShadow="none";ra.style.color="#555";ra.textContent="генерация...";
+ let i=0,t=setInterval(()=>{let s="";for(let j=0;j<4+Math.floor(Math.random()*3);j++)s+="abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random()*36)];r.textContent="@"+s;if(++i>=18){clearInterval(t);finish()}},55);
+ async function finish(){
+  try{
+   const d=await api("/api/spin",{});
+   const c={DEV:"#ff453a",LEGENDARY:"#ffd60a",EPIC:"#bf5af2",RARE:"#0a84ff"}[d.rarity]||"#aaa";
+   r.textContent=d.username;r.className="result reveal";setTimeout(()=>{r.style.color=c;r.style.textShadow="0 0 30px "+c+"55";ra.textContent=d.rarity;ra.style.color=c},150);
+   $("balance").textContent="🪙 "+d.balance.toLocaleString("ru-RU");loadProfile();
+  }catch(e){toast(e.message);r.textContent="@????";ra.textContent="1 000 🪙 за попытку"}
+  $("spinBtn").disabled=false;
  }
- // Основной Telegram username, если он есть
- if(u.username)document.getElementById("mainUser").textContent="@"+u.username;
 }
-function render(){
- const list=document.getElementById("extraList");
- list.innerHTML="";
- if(!extras.length){list.innerHTML='<div style="color:#555;text-align:left;padding:5px 2px">Пока нет дополнительных юзов</div>';return}
- extras.forEach((x,i)=>{
-   const d=document.createElement("div");d.className="extra";
-   d.innerHTML='<div class="dot">@</div><div class="extra-main"><div class="extra-user">'+x+'</div><div class="extra-info">Добавлен в профиль</div></div><div style="color:#555">›</div>';
-   list.appendChild(d);
- });
-}
-function showSpin(){document.getElementById("profilePage").classList.add("hidden");document.getElementById("spinPage").classList.remove("hidden")}
-function showProfile(){document.getElementById("spinPage").classList.add("hidden");document.getElementById("profilePage").classList.remove("hidden")}
-function openAdd(){document.getElementById("addModal").classList.remove("hidden");setTimeout(()=>document.getElementById("newUser").focus(),50)}
-function closeAdd(){document.getElementById("addModal").classList.add("hidden")}
-function saveUser(){
- let v=document.getElementById("newUser").value.trim();
- if(!v)return;
- if(!v.startsWith("@"))v="@"+v;
- extras.push(v);localStorage.setItem("extras",JSON.stringify(extras));
- document.getElementById("newUser").value="";closeAdd();render();
-}
-function spin(){
- const r=document.getElementById("result"),ra=document.getElementById("rarity");
- r.style.color="#555";r.style.textShadow="none";r.className="result";ra.style.color="#555";ra.textContent="генерация...";
- let i=0,s="";
- const timer=setInterval(()=>{
-   const len=4+Math.floor(Math.random()*3);
-   s="";
-   for(let j=0;j<len;j++)s+=chars[Math.floor(Math.random()*chars.length)];
-   r.textContent="@"+s;
-   i++;
-   if(i>=20){
-     clearInterval(timer);
-     const dev=Math.random()<0.0005;
-     const final=dev?"dev":s;
-     const type=dev?"DEV":final.length===4?"ЛЕГЕНДАРНЫЙ":final.length===5?"ЭПИЧЕСКИЙ":"РЕДКИЙ";
-     const colors={DEV:"#ff453a",ЛЕГЕНДАРНЫЙ:"#ffd60a",ЭПИЧЕСКИЙ:"#bf5af2",РЕДКИЙ:"#0a84ff"};
-     r.textContent="@"+final;r.className="result reveal";
-     setTimeout(()=>{r.style.color=colors[type];r.style.textShadow="0 0 30px "+colors[type]+"55";ra.textContent=type;ra.style.color=colors[type]},180);
-   }
- },55);
-}
-initUser();render();
+function openAdd(){$("modal").classList.remove("hidden");$("newUser").focus()}
+function closeAdd(){$("modal").classList.add("hidden")}
+async function addUser(){try{await api("/api/add-username",{username:$("newUser").value});$("newUser").value="";closeAdd();loadProfile();toast("Юз добавлен")}catch(e){toast(e.message)}}
+async function loadRating(){try{const r=await fetch(API+"/api/leaderboard");const d=await r.json();$("leaders").innerHTML=d.map((x,i)=>`<div class="item"><div class="ico">${i+1}</div><div class="grow"><div class="u">@${x.username}</div><div class="sub">${x.total} юзов</div></div></div>`).join("")||'<div class="muted">Рейтинг пока пуст</div>'}catch(e){toast("Не удалось загрузить рейтинг")}}
+loadProfile();
 </script>
 </body>
 </html>
