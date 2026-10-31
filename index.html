@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ЮЗЕРКИ</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{overflow-x:hidden}
+.app{max-width:430px;min-height:100vh;margin:auto;background:#080808;padding-bottom:78px}
+header{height:62px;border-bottom:1px solid #202020;display:flex;align-items:center;justify-content:center;font-weight:850;position:relative}
+.page{padding:22px 18px}.center{text-align:center}
+.avatar{width:104px;height:104px;border-radius:50%;background:#222;border:1px solid #444;margin:8px auto 14px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:38px;font-weight:900}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.name{font-size:23px;font-weight:900}.muted{color:#707070;font-size:13px}
+.label{margin:25px 2px 8px;color:#666;font-size:10px;font-weight:850;letter-spacing:1px}
+.card,.item{background:#111;border:1px solid #292929;border-radius:16px}
+.card{padding:15px;display:flex;align-items:center;justify-content:space-between}
+.mainuser{font-size:20px;font-weight:900}
+.tag{background:#242424;color:#aaa;border-radius:8px;padding:6px 8px;font-size:9px;font-weight:900}
+button{cursor:pointer}
+.action{width:100%;padding:15px;border:1px solid #444;border-radius:15px;background:#151515;color:#fff;font-weight:850;margin-top:10px;transition:transform .15s,background .2s}
+.action:active{transform:scale(.97);background:#222}
+.action:disabled{opacity:.45}
+.list{display:grid;gap:8px}.item{padding:13px;display:flex;align-items:center;gap:12px}
+.ico{width:42px;height:42px;border-radius:12px;background:#202020;display:grid;place-items:center;color:#aaa;font-weight:900}
+.grow{flex:1}.u{font-weight:850}.sub{font-size:11px;color:#666;margin-top:3px}
+.balance{position:absolute;right:15px;color:#aaa;font-size:12px}
+.back{position:absolute;left:15px;color:#777;font-size:27px;background:none;border:0}
+.generator{text-align:center;padding:72px 20px}
+.result{font-size:43px;font-weight:950;min-height:60px;margin:15px 0 5px;color:#555;transition:color 1s,text-shadow 1s,transform .3s}
+.rarity{font-size:13px;color:#555;font-weight:850;transition:color 1s}
+@keyframes reveal{0%{opacity:.1;filter:blur(12px);transform:scale(.92)}55%{opacity:.75;filter:blur(2px);transform:scale(1.04)}100%{opacity:1;filter:none;transform:scale(1)}}
+.reveal{animation:reveal .85s cubic-bezier(.2,.8,.2,1)}
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:.35}}
+.spinning{animation:flicker .12s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #fff0}50%{box-shadow:0 0 35px 5px #fff1}100%{box-shadow:0 0 0 0 #fff0}}
+.win{animation:pulse 1.1s ease-out}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);height:72px;background:#0b0b0bf5;border-top:1px solid #222;display:flex;justify-content:space-around;align-items:center;backdrop-filter:blur(15px);z-index:4}
+.nav button{border:0;background:none;color:#666;font-size:11px}.nav b{display:block;font-size:20px;margin-bottom:3px}.nav .on{color:#fff}
+.hidden{display:none!important}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#222;border:1px solid #444;padding:10px 14px;border-radius:12px;z-index:10;font-size:13px}
+.welcome{position:fixed;inset:0;background:#000d;display:flex;align-items:flex-end;z-index:20;backdrop-filter:blur(10px)}
+.welcome-sheet{width:min(430px,100%);background:#101010;border:1px solid #303030;border-radius:28px 28px 0 0;padding:26px 20px 28px;animation:sheetIn .45s cubic-bezier(.2,.8,.2,1)}
+.welcome-logo{width:62px;height:62px;border-radius:19px;background:#fff;color:#000;display:grid;place-items:center;margin:0 auto 18px;font-size:28px;font-weight:950;animation:logoIn .55s .08s both}
+.welcome h2{text-align:center;margin:0 0 12px;font-size:25px}
+.welcome p{color:#999;line-height:1.5;text-align:center;margin:0 auto;max-width:360px;font-size:14px}
+.welcome .action{margin-top:22px}
+@keyframes sheetIn{from{transform:translateY(100%);opacity:.2}to{transform:translateY(0);opacity:1}}
+@keyframes logoIn{from{transform:scale(.65);opacity:0}to{transform:scale(1);opacity:1}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<section id="profile">
+<header>Профиль <span id="balance" class="balance">🪙 —</span></header>
+<div class="page center">
+<div id="avatar" class="avatar">?</div>
+<div id="name" class="name">Загрузка...</div>
+<div id="tg" class="muted">@username</div>
+<div class="label">Основной юз</div>
+<div class="card"><div id="main" class="mainuser">—</div><div class="tag">ОСНОВНОЙ</div></div>
+<div class="label">А так же</div>
+<div id="list" class="list"></div>
+</div>
+</section>
+
+<section id="spinPage" class="hidden">
+<header><button class="back" onclick="show('profile')">‹</button>Крутить юз</header>
+<div class="generator">
+<div class="muted">СЛУЧАЙНЫЙ ЮЗ</div>
+<div id="result" class="result">@????</div>
+<div id="rarity" class="rarity">1 000 🪙 за попытку</div>
+<button id="spinBtn" class="action" onclick="spin()">СГЕНЕРИРОВАТЬ · 1 000 🪙</button>
+</div>
+</section>
+
+<section id="rating" class="hidden">
+<header>Рейтинг</header>
+<div class="page"><div id="leaders" class="list"></div></div>
+</section>
+
+<nav class="nav">
+<button onclick="show('spinPage')" id="nspin"><b>🎲</b>Крутить</button>
+<button onclick="loadRating();show('rating')"><b>🏆</b>Рейтинг</button>
+<button onclick="show('profile')" class="on"><b>👤</b>Профиль</button>
+</nav>
+</div>
+
+<div id="welcome" class="welcome">
+<div class="welcome-sheet">
+<div class="welcome-logo">Ю</div>
+<h2>Добро пожаловать!</h2>
+<p>
+Эта игра создана исключительно в развлекательных целях и не является частью
+официального Telegram. Все юзы и монеты внутри игры — игровые элементы.
+Удачи в крутках и приятной игры!
+</p>
+<button class="action" onclick="closeWelcome()">ПОНЯТНО</button>
+</div>
+</div>
+
+<script>
+const tg=window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand()}
+const initData=tg?.initData||"";
+const API=location.origin;
+const $=id=>document.getElementById(id);
+
+function toast(t){
+ const x=document.createElement("div");
+ x.className="toast";x.textContent=t;document.body.appendChild(x);
+ setTimeout(()=>x.remove(),1800);
+}
+function show(id){
+ ["profile","spinPage","rating"].forEach(x=>$(x).classList.add("hidden"));
+ $(id).classList.remove("hidden");
+}
+function closeWelcome(){
+ $("welcome").classList.add("hidden");
+ try{localStorage.setItem("yuzerki_welcome_seen","1")}catch(e){}
+}
+try{
+ if(localStorage.getItem("yuzerki_welcome_seen")==="1") closeWelcome();
+}catch(e){}
+
+async function api(path,body){
+ const r=await fetch(API+path,{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({...body,initData})
+ });
+ const d=await r.json();
+ if(!r.ok)throw Error(d.detail||"Ошибка");
+ return d;
+}
+
+async function loadProfile(){
+ if(!initData){
+   $("name").textContent="Открой игру через Telegram";
+   return;
+ }
+ try{
+   const d=await api("/api/profile",{});
+   $("name").textContent=[d.user.first_name,d.user.last_name].filter(Boolean).join(" ")||"Пользователь";
+   $("tg").textContent=d.user.username?"@"+d.user.username:"username не указан";
+   $("balance").textContent="🪙 "+d.balance.toLocaleString("ru-RU");
+   $("main").textContent=d.main_username||"—";
+   if(d.user.photo_url)$("avatar").innerHTML='<img src="'+d.user.photo_url+'" alt="Аватар">';
+   else $("avatar").textContent=(d.user.first_name||"?")[0].toUpperCase();
+
+   const won=(d.usernames||[]).filter(x=>x.rarity!=="ADDED");
+   $("list").innerHTML=won.map(x=>
+     `<div class="item">
+       <div class="ico">@</div>
+       <div class="grow">
+         <div class="u">@${x.username.replace(/^@/,"")}</div>
+         <div class="sub">${x.rarity}</div>
+       </div>
+     </div>`
+   ).join("") || '<div class="muted">Пока ничего не выпало</div>';
+ }catch(e){toast(e.message)}
+}
+
+async function spin(){
+ const btn=$("spinBtn");
+ btn.disabled=true;
+
+ const r=$("result"),ra=$("rarity");
+ r.classList.remove("reveal","win");
+ r.classList.add("spinning");
+ r.style.color="#555";
+ r.style.textShadow="none";
+ ra.style.color="#555";
+ ra.textContent="генерация...";
+
+ let i=0;
+ const chars="abcdefghijklmnopqrstuvwxyz0123456789";
+ const timer=setInterval(()=>{
+   let s="";
+   for(let j=0;j<4+Math.floor(Math.random()*3);j++)
+     s+=chars[Math.floor(Math.random()*chars.length)];
+   r.textContent="@"+s;
+   if(++i>=22){
+     clearInterval(timer);
+     finish();
+   }
+ },65);
+
+ async function finish(){
+   try{
+     const d=await api("/api/spin",{});
+     const c={
+       DEV:"#ff453a",
+       LEGENDARY:"#ffd60a",
+       EPIC:"#bf5af2",
+       RARE:"#0a84ff"
+     }[d.rarity]||"#aaa";
+
+     r.classList.remove("spinning");
+     r.textContent=d.username;
+     void r.offsetWidth;
+     r.classList.add("reveal","win");
+
+     setTimeout(()=>{
+       r.style.color=c;
+       r.style.textShadow="0 0 30px "+c+"55";
+       ra.textContent=d.rarity;
+       ra.style.color=c;
+     },220);
+
+     $("balance").textContent="🪙 "+d.balance.toLocaleString("ru-RU");
+     loadProfile();
+   }catch(e){
+     r.classList.remove("spinning");
+     toast(e.message);
+     r.textContent="@????";
+     ra.textContent="1 000 🪙 за попытку";
+   }
+   btn.disabled=false;
+ }
+}
+
+async function loadRating(){
+ try{
+   const r=await fetch(API+"/api/leaderboard");
+   const d=await r.json();
+   $("leaders").innerHTML=d.map((x,i)=>
+     `<div class="item">
+       <div class="ico">${i+1}</div>
+       <div class="grow">
+         <div class="u">@${x.username}</div>
+         <div class="sub">${x.total} юзов</div>
+       </div>
+     </div>`
+   ).join("") || '<div class="muted">Рейтинг пока пуст</div>';
+ }catch(e){toast("Не удалось загрузить рейтинг")}
+}
+
+loadProfile();
+</script>
+</body>
+</html>
