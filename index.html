@@ -25,6 +25,12 @@ button{cursor:pointer}
 .action:active{transform:scale(.97);background:#222}
 .action:disabled{opacity:.45}
 .list{display:grid;gap:8px}.item{padding:13px;display:flex;align-items:center;gap:12px}
+.won-line{font-size:15px;line-height:1.75;color:#ddd;text-align:left;word-break:break-word}
+.won-line a{color:#fff;text-decoration:none}
+.value{font-size:11px;color:#777;margin-top:3px}
+.sell{border:1px solid #333;background:#181818;color:#bbb;border-radius:10px;padding:8px 10px;font-weight:800;font-size:11px}
+.sell:active{transform:scale(.96)}
+
 .ico{width:42px;height:42px;border-radius:12px;background:#202020;display:grid;place-items:center;color:#aaa;font-weight:900}
 .grow{flex:1}.u{font-weight:850}.sub{font-size:11px;color:#666;margin-top:3px}
 .balance{position:absolute;right:15px;color:#aaa;font-size:12px}
@@ -153,15 +159,21 @@ async function loadProfile(){
    else $("avatar").textContent=(d.user.first_name||"?")[0].toUpperCase();
 
    const won=(d.usernames||[]).filter(x=>x.rarity!=="ADDED");
-   $("list").innerHTML=won.map(x=>
-     `<div class="item">
-       <div class="ico">@</div>
-       <div class="grow">
-         <div class="u">@${x.username.replace(/^@/,"")}</div>
-         <div class="sub">${x.rarity}</div>
-       </div>
-     </div>`
-   ).join("") || '<div class="muted">Пока ничего не выпало</div>';
+   $("list").innerHTML = won.length
+     ? `<div class="won-line">${won.map(x=>`@${x.username.replace(/^@/,"")}`).join(", ")}</div>
+        <div class="list">
+          ${won.map(x=>`
+            <div class="item">
+              <div class="ico">@</div>
+              <div class="grow">
+                <div class="u">@${x.username.replace(/^@/,"")}</div>
+                <div class="sub">${x.rarity} · ${Number(x.value||0).toLocaleString("ru-RU")} 🪙</div>
+              </div>
+              <button class="sell" onclick="sellUsername('${x.username.replace(/'/g,"\\'")}')">ПРОДАТЬ</button>
+            </div>
+          `).join("")}
+        </div>`
+     : '<div class="muted">Пока ничего не выпало</div>';
  }catch(e){toast(e.message)}
 }
 
@@ -208,7 +220,7 @@ async function spin(){
      setTimeout(()=>{
        r.style.color=c;
        r.style.textShadow="0 0 30px "+c+"55";
-       ra.textContent=d.rarity;
+       ra.textContent=d.rarity+" · "+Number(d.value||0).toLocaleString("ru-RU")+" 🪙";
        ra.style.color=c;
      },220);
 
@@ -222,6 +234,18 @@ async function spin(){
    }
    btn.disabled=false;
  }
+}
+
+async function sellUsername(username){
+  if(!confirm("Продать "+username+" за фиксированную стоимость?")) return;
+  try{
+    const d=await api("/api/sell",{username});
+    $("balance").textContent="🪙 "+d.balance.toLocaleString("ru-RU");
+    toast(username+" продан за "+Number(d.value).toLocaleString("ru-RU")+" 🪙");
+    await loadProfile();
+  }catch(e){
+    toast(e.message);
+  }
 }
 
 async function loadRating(){

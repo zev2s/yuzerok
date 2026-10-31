@@ -32,6 +32,14 @@ SPIN_COST = 0
 START_BALANCE = 10000
 DEV_CHANCE = 1 / 2_000_000
 
+# Fixed in-game values. Selling never triggers another random spin.
+USERNAME_VALUES = {
+    "DEV": 1_000_000,
+    "LEGENDARY": 100_000,
+    "EPIC": 10_000,
+    "RARE": 1_000,
+}
+
 db = sqlite3.connect(DATABASE_PATH, check_same_thread=False)
 db.row_factory = sqlite3.Row
 db.execute("PRAGMA journal_mode=WAL")
@@ -80,6 +88,10 @@ class InitRequest(BaseModel):
 
 class PromoRequest(InitRequest):
     code: str
+
+
+class SellRequest(InitRequest):
+    username: str
 
 
 def verify_init_data(init_data: str):
@@ -173,7 +185,13 @@ def public_profile(tg_id):
         },
         "balance": u["balance"],
         "main_username": u["main_username"],
-        "usernames": [dict(x) for x in items]
+        "usernames": [
+            {
+                **dict(x),
+                "value": USERNAME_VALUES.get(x["rarity"], 0)
+            }
+            for x in items
+        ]
     }
 
 
@@ -260,7 +278,60 @@ def spin(req: InitRequest):
     return {
         "username": "@" + name,
         "rarity": rarity,
+        "value": USERNAME_VALUES.get(rarity, 0),
         "balance": new_balance
+    }
+
+
+@app.post("/api/sell")
+def sell(req: SellRequest):
+    u = verify_init_data(req.initData)
+    ensure_user(u)
+    tg_id = u["id"]
+    username = req.username.strip().lstrip("@").lower()
+
+    row = db.execute(
+        "SELECT * FROM usernames WHERE tg_id=? AND username=?",
+        (tg_id, username)
+    ).fetchone()
+
+    if not row:
+        raise HTTPException(404, "Этот юз не найден в твоём профиле")
+
+    value = USERNAME_VALUES.get(row["rarity"], 0)
+    if value <= 0:
+        raise HTTPException(400, "Этот юз нельзя продать")
+
+    # Selling is a fixed-value exchange only; it does not trigger a new spin.
+    db.execute("DELETE FROM usernames WHERE id=?", (row["id"],))
+
+    if row["username"] == db.execute(
+        "SELECT main_username FROM users WHERE tg_id=?", (tg_id,)
+    ).fetchone()["main_username"]:
+        replacement = db.execute(
+            "SELECT username FROM usernames WHERE tg_id=? ORDER BY id DESC LIMIT 1",
+            (tg_id,)
+        ).fetchone()
+        db.execute(
+            "UPDATE users SET main_username=? WHERE tg_id=?",
+            (replacement["username"] if replacement else None, tg_id)
+        )
+
+    db.execute(
+        "UPDATE users SET balance=balance+? WHERE tg_id=?",
+        (value, tg_id)
+    )
+    db.commit()
+
+    balance = db.execute(
+        "SELECT balance FROM users WHERE tg_id=?", (tg_id,)
+    ).fetchone()["balance"]
+
+    return {
+        "ok": True,
+        "username": "@" + username,
+        "value": value,
+        "balance": balance
     }
 
 
