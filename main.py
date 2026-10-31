@@ -26,7 +26,13 @@ PORT = int(os.getenv("PORT", "8000"))
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEB_DIR = os.path.join(os.path.dirname(BASE_DIR), "web")
-INDEX_FILE = os.path.join(WEB_DIR, "index.html")
+# Support both repository layouts: root index.html or web/index.html.
+CANDIDATE_INDEX_FILES = [
+    os.path.join(BASE_DIR, "index.html"),
+    os.path.join(WEB_DIR, "index.html"),
+    os.path.join(os.path.dirname(BASE_DIR), "index.html"),
+]
+INDEX_FILE = next((p for p in CANDIDATE_INDEX_FILES if os.path.exists(p)), CANDIDATE_INDEX_FILES[0])
 
 SPIN_COST = 0
 START_BALANCE = 10000

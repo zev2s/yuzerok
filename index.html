@@ -173,7 +173,12 @@ async function loadProfile(){
    document.querySelectorAll(".won-user").forEach(el=>{
      el.onclick=()=>openUsernameActions(el.dataset.username, Number(el.dataset.value||0));
    });
- }catch(e){toast(e.message)}
+ }catch(e){
+   console.error("PROFILE ERROR", e);
+   $("name").textContent="Не удалось загрузить профиль";
+   $("tg").textContent=e.message||"Ошибка API";
+   toast(e.message||"Ошибка загрузки");
+ }
 }
 
 let selectedUsername="";
